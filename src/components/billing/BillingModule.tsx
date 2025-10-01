@@ -5,8 +5,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { Plus, Trash, Download } from '@phosphor-icons/react'
+import { Plus, Trash, Download, Receipt } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
+import { billsAPI, customersAPI } from '@/lib/api'
+import { generateBillPDF } from '@/lib/pdfGenerator'
+import { toast } from 'sonner'
 import LineItemRow from './LineItemRow'
 import CustomerSelector from './CustomerSelector'
 import OldGoldExchange from './OldGoldExchange'
@@ -137,23 +140,131 @@ export default function BillingModule() {
   }
   
   const generateBill = async () => {
-    const billNumber = `AS${Date.now()}`
-    const totals = calculateTotals()
-    
-    const bill = {
-      billNumber,
-      date: new Date().toISOString(),
-      customer,
-      lineItems,
-      oldGold,
-      goldRates,
-      paymentMethod,
-      totals
+    try {
+      // Validate customer data
+      if (!customer.name || !customer.phone) {
+        toast.error('Please fill in customer name and phone number');
+        return;
+      }
+
+      // Validate line items
+      if (lineItems.length === 0) {
+        toast.error('Please add at least one item');
+        return;
+      }
+
+      // Check if customer exists or create new one
+      let customerId;
+      try {
+        const existingCustomers = await customersAPI.search(customer.phone);
+        if (existingCustomers.length > 0) {
+          customerId = existingCustomers[0]._id;
+        } else {
+          // Create new customer
+          const newCustomer = await customersAPI.create({
+            name: customer.name,
+            phone: customer.phone,
+            email: customer.email,
+            gstNumber: customer.gstin
+          });
+          customerId = newCustomer._id;
+        }
+      } catch (error) {
+        console.error('Customer creation error:', error);
+        toast.error('Failed to create customer');
+        return;
+      }
+
+      const totals = calculateTotals();
+      
+      // Format items for API
+      const formattedItems = lineItems.map(item => {
+        const rate = goldRates[item.purity] || 0;
+        const baseAmount = (item.netWeight / 10) * rate;
+        const makingAmount = item.makingChargesType === 'per_gram' 
+          ? (item.netWeight * item.makingCharges)
+          : item.makingCharges;
+        const totalAmount = baseAmount + makingAmount + item.hallmarkingCharges;
+        const taxableAmount = totalAmount;
+        const cgstAmount = taxableAmount * 0.015; // 1.5% CGST
+        const sgstAmount = taxableAmount * 0.015; // 1.5% SGST
+
+        return {
+          description: item.description,
+          hsnCode: '71131900', // Gold jewelry HSN code
+          quantity: 1,
+          unit: 'PCS',
+          rate: totalAmount,
+          amount: totalAmount,
+          purity: parseInt(item.purity),
+          weight: item.netWeight,
+          wastage: 0,
+          makingCharges: makingAmount,
+          huid: item.huidNumber,
+          taxableAmount,
+          cgstRate: 1.5,
+          cgstAmount,
+          sgstRate: 1.5,
+          sgstAmount,
+          igstRate: 0,
+          igstAmount: 0
+        };
+      });
+
+      const billData = {
+        customer: customerId,
+        billDate: new Date().toISOString(),
+        items: formattedItems,
+        subtotal: totals.subtotal,
+        totalCgst: totals.cgst,
+        totalSgst: totals.sgst,
+        totalIgst: 0,
+        totalTax: totals.totalTax,
+        totalAmount: totals.grandTotal,
+        roundOffAmount: 0,
+        finalAmount: totals.grandTotal,
+        paymentMethod: paymentMethod,
+        status: 'sent',
+        paymentStatus: 'pending',
+        notes: 'Thank you for your business!',
+        termsAndConditions: 'All sales are final. Please check items before leaving the store.'
+      };
+
+      // Save bill to backend
+      const savedBill = await billsAPI.create(billData);
+      
+      // Add to local storage for quick access
+      setBills((currentBills: any[] | undefined) => [...(currentBills || []), savedBill]);
+      
+      // Generate PDF
+      await generateBillPDF(savedBill);
+      
+      toast.success('Bill generated and PDF downloaded successfully!');
+      
+      // Reset form
+      setLineItems([{
+        id: Date.now().toString(),
+        purity: '22K',
+        description: '',
+        netWeight: 0,
+        grossWeight: 0,
+        huidNumber: '',
+        makingChargesType: 'per_gram',
+        makingCharges: 0,
+        hallmarkingCharges: 0
+      }]);
+      
+      setCustomer({
+        name: '',
+        phone: '',
+        email: '',
+        gstin: ''
+      });
+      
+    } catch (error) {
+      console.error('Failed to generate bill:', error);
+      toast.error('Failed to generate bill. Please try again.');
     }
-    
-    setBills((currentBills: any[] | undefined) => [...(currentBills || []), bill])
-    
-    console.log('Bill generated:', bill)
   }
   
   const totals = calculateTotals()
