@@ -1,5 +1,5 @@
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 // Helper function to convert numbers to words
 const numberToWords = (num: number): string => {
