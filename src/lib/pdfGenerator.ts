@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import logo from '../assets/logo.png'
 
 // Helper function to convert numbers to words
 const numberToWords = (num: number): string => {
@@ -109,9 +110,9 @@ export const generateBillPDF = async (billData: BillData): Promise<void> => {
   const pdf = new jsPDF('l', 'mm', 'a4'); // 'l' for landscape
   
   // Company details
-  const companyName = 'Arjun Swarnkar';
-  const companyGST = '24XXXXX1234X1ZX';
-  const companyAddress = 'Gold & Jewelry Shop\nMarket Street, City - 123456\nPhone: +91-9876543210 | Email: info@arjunswarnkar.com';
+  const companyName = 'Brahmdev Prasad Jewelers';
+  const companyGST = '19FNAPS0298Q1ZJ';
+  const companyAddress = 'Dahlan Chowk, Saharsa - 852201\nPhone: +91-7764066194 | Email: akashraj1113@gmail.com';
   
   // Draw outer border (landscape dimensions: 297x210)
   pdf.setLineWidth(0.5);
@@ -139,7 +140,8 @@ export const generateBillPDF = async (billData: BillData): Promise<void> => {
   pdf.rect(12, 32, 50, 31);
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('LOGO', 37, 50, { align: 'center' });
+  pdf.addImage(logo, "PNG", 12, 32, 50, 31);
+  // pdf.text('LOGO', 37, 50, { align: 'center' });
   
   // Company info
   pdf.setFontSize(10);
