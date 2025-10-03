@@ -63,7 +63,7 @@ export default function BillDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-y-auto sm:max-w-[95vw]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="w-5 h-5" />
@@ -134,43 +134,53 @@ export default function BillDetailsDialog({
             {/* Items Table */}
             <div>
               <h3 className="font-semibold mb-4">Items</h3>
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Description</TableHead>
-                      <TableHead>HSN</TableHead>
-                      <TableHead>Qty</TableHead>
-                      <TableHead>Rate</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>CGST</TableHead>
-                      <TableHead>SGST</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="min-w-[200px]">Description</TableHead>
+                      <TableHead className="min-w-[80px]">HSN</TableHead>
+                      <TableHead className="min-w-[60px]">Purity</TableHead>
+                      <TableHead className="min-w-[80px]">Weight (g)</TableHead>
+                      <TableHead className="min-w-[60px]">Qty</TableHead>
+                      <TableHead className="min-w-[100px]">Rate</TableHead>
+                      <TableHead className="min-w-[100px]">Amount</TableHead>
+                      <TableHead className="min-w-[100px]">Making Charges</TableHead>
+                      <TableHead className="min-w-[80px]">CGST</TableHead>
+                      <TableHead className="min-w-[80px]">SGST</TableHead>
+                      <TableHead className="min-w-[100px] text-right">Total</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {fullBill.items.map((item: any, index: number) => (
                       <TableRow key={index}>
-                        <TableCell>
+                        <TableCell className="min-w-[200px]">
                           <div>
                             <p className="font-medium">{item.description}</p>
-                            {item.purity && (
+                            {item.huid && (
                               <p className="text-xs text-muted-foreground">
-                                {item.purity}K Gold
-                                {item.weight && ` • ${item.weight}g`}
-                                {item.huid && ` • HUID: ${item.huid}`}
+                                HUID: {item.huid}
                               </p>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>{item.hsnCode}</TableCell>
-                        <TableCell>{item.quantity} {item.unit}</TableCell>
-                        <TableCell>₹{item.rate.toLocaleString('en-IN')}</TableCell>
-                        <TableCell>₹{item.amount.toLocaleString('en-IN')}</TableCell>
-                        <TableCell>₹{item.cgstAmount.toFixed(2)}</TableCell>
-                        <TableCell>₹{item.sgstAmount.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">
-                          ₹{(item.amount + item.cgstAmount + item.sgstAmount + (item.igstAmount || 0)).toLocaleString('en-IN')}
+                        <TableCell className="min-w-[80px]">{item.hsnCode}</TableCell>
+                        <TableCell className="min-w-[60px]">
+                          {item.purity ? `${item.purity}K` : '-'}
+                        </TableCell>
+                        <TableCell className="min-w-[80px]">
+                          {item.weight ? `${item.weight}g` : '-'}
+                        </TableCell>
+                        <TableCell className="min-w-[60px]">{item.quantity} {item.unit}</TableCell>
+                        <TableCell className="min-w-[100px]">₹{item.rate.toLocaleString('en-IN')}</TableCell>
+                        <TableCell className="min-w-[100px]">₹{item.amount.toLocaleString('en-IN')}</TableCell>
+                        <TableCell className="min-w-[100px]">
+                          ₹{(item.makingCharges || 0).toLocaleString('en-IN')}
+                        </TableCell>
+                        <TableCell className="min-w-[80px]">₹{item.cgstAmount.toFixed(2)}</TableCell>
+                        <TableCell className="min-w-[80px]">₹{item.sgstAmount.toFixed(2)}</TableCell>
+                        <TableCell className="min-w-[100px] text-right font-medium">
+                          ₹{(item.amount + (item.makingCharges || 0) + item.cgstAmount + item.sgstAmount + (item.igstAmount || 0)).toLocaleString('en-IN')}
                         </TableCell>
                       </TableRow>
                     ))}
