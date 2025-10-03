@@ -57,8 +57,8 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center overflow-hidden p-4">
-      <div className="w-full relative max-w-5xl overflow-hidden flex flex-col md:flex-row shadow-xl">
+    <div className="min-h-screen  flex items-center justify-center overflow-hidden p-4 bg-gradient-to-br from-[#a1c4fd] to-[#c2e9fb] ">
+      <div className="w-full relative max-w-5xl overflow-hidden flex flex-col md:flex-row shadow-xl rounded-xl ">
         <div className="w-full h-full z-2 absolute bg-gradient-to-t from-transparent to-black"></div>
         <div className="flex absolute z-2 overflow-hidden backdrop-blur-2xl">
           <div className="h-[40rem] z-2 w-[4rem] bg-gradient-to-b from-transparent via-black/70 to-white/30 opacity-30 overflow-hidden"></div>
@@ -73,8 +73,8 @@ export default function LoginForm() {
         <div className="w-[8rem] h-[5rem] bg-white absolute z-1 rounded-full bottom-0"></div>
 
         <div className="bg-black text-white p-8 md:p-12 md:w-1/2 relative rounded-bl-3xl overflow-hidden">
-          <h1 className="text-2xl md:text-3xl font-medium leading-tight z-10 tracking-tight relative">
-            Arjun Swarnkar Jewelry
+          <h1 className="text-2xl md:text-3xl font-medium leading-tight z-10 tracking-tight relative text-yellow-600">
+            BrahmDev Prasad  Jewellers
           </h1>
           <p className="text-lg md:text-xl opacity-80 mt-4 z-10 relative">
             Professional Digital Billing System for Jewelry Business
