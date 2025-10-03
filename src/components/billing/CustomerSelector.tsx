@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { MagnifyingGlass, UserPlus } from '@phosphor-icons/react'
-import { useKV } from '@github/spark/hooks'
+import { customersAPI } from '@/lib/api'
+import { toast } from 'sonner'
 
 interface Customer {
+  _id?: string
   name: string
   phone: string
   email?: string
@@ -20,24 +22,65 @@ interface CustomerSelectorProps {
 }
 
 export default function CustomerSelector({ customer, setCustomer }: CustomerSelectorProps) {
-  const [customers, setCustomers] = useKV<Customer[]>('customers', [])
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const filteredCustomers = customers?.filter(c => 
+  // Fetch customers on component mount
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const customersData = await customersAPI.getAll()
+        console.log('Customers API response:', customersData)
+        
+        // Handle the API response format: { customers: [...], pagination: {...} }
+        if (customersData && Array.isArray(customersData.customers)) {
+          setCustomers(customersData.customers)
+        } else if (Array.isArray(customersData)) {
+          // Fallback: if API returns array directly
+          setCustomers(customersData)
+        } else if (customersData && Array.isArray(customersData.data)) {
+          // Another fallback: if API returns { data: [...] }
+          setCustomers(customersData.data)
+        } else {
+          console.error('Invalid customers data format:', customersData)
+          setCustomers([])
+        }
+      } catch (error) {
+        console.error('Error fetching customers:', error)
+        setCustomers([]) // Ensure customers is always an array
+      }
+    }
+    
+    fetchCustomers()
+  }, [])
+
+  const filteredCustomers = Array.isArray(customers) ? customers.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.phone.includes(searchTerm)
-  ) || []
+  ) : []
 
   const selectCustomer = (selectedCustomer: Customer) => {
     setCustomer(selectedCustomer)
     setIsDialogOpen(false)
   }
 
-  const addNewCustomer = () => {
+  const addNewCustomer = async () => {
     if (customer.name && customer.phone) {
-      setCustomers((prev: Customer[] | undefined) => [...(prev || []), customer])
-      setIsDialogOpen(false)
+      try {
+        const newCustomer = await customersAPI.create({
+          name: customer.name,
+          phone: customer.phone,
+          email: customer.email,
+          gstNumber: customer.gstin
+        })
+        setCustomers(prev => [...prev, newCustomer])
+        setIsDialogOpen(false)
+        toast.success('Customer added successfully')
+      } catch (error) {
+        console.error('Error adding customer:', error)
+        toast.error('Failed to add customer')
+      }
     }
   }
 
@@ -129,7 +172,7 @@ export default function CustomerSelector({ customer, setCustomer }: CustomerSele
           </div>
         </div>
 
-        {customer.name && customer.phone && !customers?.some(c => c.name === customer.name && c.phone === customer.phone) && (
+        {customer.name && customer.phone && (!Array.isArray(customers) || !customers.some(c => c.name === customer.name && c.phone === customer.phone)) && (
           <Button onClick={addNewCustomer} variant="outline" size="sm">
             <UserPlus className="w-4 h-4 mr-2" />
             Save as New Customer

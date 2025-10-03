@@ -27,7 +27,7 @@ cleanup() {
 # Set trap to cleanup on script exit
 trap cleanup INT TERM EXIT
 
-echo "Backend running on http://localhost:5000"
+echo "Backend running on http://localhost:3000"
 echo "Frontend running on http://localhost:5173"
 echo "Press Ctrl+C to stop both servers"
 

@@ -202,10 +202,12 @@ const billSchema = new mongoose.Schema({
 billSchema.pre('save', async function(next) {
   if (this.isNew && !this.billNumber) {
     try {
+      console.log('Generating bill number...');
       const lastBill = await this.constructor.findOne({}, {}, { sort: { 'createdAt': -1 } });
       let nextNumber = 1;
       
       if (lastBill && lastBill.billNumber) {
+        console.log('Last bill number:', lastBill.billNumber);
         const match = lastBill.billNumber.match(/\d+$/);
         if (match) {
           nextNumber = parseInt(match[0]) + 1;
@@ -217,7 +219,9 @@ billSchema.pre('save', async function(next) {
       const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
       
       this.billNumber = `AS${year}${month}${nextNumber.toString().padStart(4, '0')}`;
+      console.log('Generated bill number:', this.billNumber);
     } catch (error) {
+      console.error('Error generating bill number:', error);
       return next(error);
     }
   }

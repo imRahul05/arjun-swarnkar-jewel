@@ -1,28 +1,48 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useKV } from '@github/spark/hooks'
+import { billsAPI } from '@/lib/api'
+import { toast } from 'sonner'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts'
 
 export default function Analytics() {
-  const [bills] = useKV<any[]>('bills', [])
+  const [bills, setBills] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState('30')
   const [filterPurity, setFilterPurity] = useState('all')
+
+  // Fetch bills on component mount
+  useEffect(() => {
+    const fetchBills = async () => {
+      try {
+        setLoading(true)
+        const billsData = await billsAPI.getAll()
+        setBills(billsData)
+      } catch (error) {
+        console.error('Error fetching bills:', error)
+        toast.error('Failed to load analytics data')
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchBills()
+  }, [])
   
   const filterBills = () => {
-    if (!bills) return []
+    if (!bills.length) return []
     
     const daysAgo = new Date()
     daysAgo.setDate(daysAgo.getDate() - parseInt(dateRange))
     
     return bills.filter(bill => {
-      const billDate = new Date(bill.date)
+      const billDate = new Date(bill.billDate)
       const dateMatch = billDate >= daysAgo
       const purityMatch = filterPurity === 'all' || 
-        bill.lineItems.some((item: any) => item.purity === filterPurity)
+        bill.items.some((item: any) => item.purity.toString() + 'K' === filterPurity)
       
       return dateMatch && purityMatch
     })
@@ -34,9 +54,9 @@ export default function Analytics() {
     const salesMap = new Map()
     
     filteredBills.forEach(bill => {
-      const date = new Date(bill.date).toLocaleDateString('en-IN')
+      const date = new Date(bill.billDate).toLocaleDateString('en-IN')
       const existing = salesMap.get(date) || 0
-      salesMap.set(date, existing + bill.totals.grandTotal)
+      salesMap.set(date, existing + bill.totalAmount)
     })
     
     return Array.from(salesMap.entries())
@@ -49,9 +69,10 @@ export default function Analytics() {
     const purityMap = new Map()
     
     filteredBills.forEach(bill => {
-      bill.lineItems.forEach((item: any) => {
-        const existing = purityMap.get(item.purity) || 0
-        purityMap.set(item.purity, existing + (item.netWeight * (bill.goldRates[item.purity] / 10)))
+      bill.items.forEach((item: any) => {
+        const purity = item.purity + 'K'
+        const existing = purityMap.get(purity) || 0
+        purityMap.set(purity, existing + item.amount)
       })
     })
     
@@ -65,15 +86,13 @@ export default function Analytics() {
     const itemTypes = new Map()
     
     filteredBills.forEach(bill => {
-      bill.lineItems.forEach((item: any) => {
+      bill.items.forEach((item: any) => {
         const type = item.description.split(' ')[1] || 'Other'
-        const makingCharges = item.makingChargesType === 'per_gram' 
-          ? item.netWeight * item.makingCharges 
-          : item.makingCharges
+        const makingCharges = item.makingCharges || 0
         
         const existing = itemTypes.get(type) || { total: 0, making: 0, count: 0 }
         itemTypes.set(type, {
-          total: existing.total + (item.netWeight * (bill.goldRates[item.purity] / 10)),
+          total: existing.total + item.amount,
           making: existing.making + makingCharges,
           count: existing.count + 1
         })
@@ -93,9 +112,23 @@ export default function Analytics() {
   
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1']
   
-  const totalSales = filteredBills.reduce((sum, bill) => sum + bill.totals.grandTotal, 0)
-  const totalGST = filteredBills.reduce((sum, bill) => sum + bill.totals.totalGst, 0)
+  const totalSales = filteredBills.reduce((sum, bill) => sum + bill.totalAmount, 0)
+  const totalGST = filteredBills.reduce((sum, bill) => sum + (bill.totalCgst + bill.totalSgst + bill.totalIgst), 0)
   const avgBillValue = filteredBills.length > 0 ? totalSales / filteredBills.length : 0
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Analytics & Reports</h2>
+          <div className="text-sm text-muted-foreground">Loading...</div>
+        </div>
+        <div className="text-center py-8">
+          <div className="text-muted-foreground">Loading analytics data...</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

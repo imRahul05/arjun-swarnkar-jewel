@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Receipt, TrendUp, Users, Calculator, FileText, LogOut } from '@phosphor-icons/react'
+import { Receipt, TrendUp, Users, Calculator, FileText, SignOut } from '@phosphor-icons/react'
 import { AuthProvider, useAuth } from '@/components/auth/AuthContext'
 import LoginForm from '@/components/auth/LoginForm'
 import BillingModule from '@/components/billing/BillingModule'
@@ -56,7 +56,7 @@ function AppContent() {
                 <p className="text-xs text-muted-foreground">GST: 24XXXXX1234X1ZX</p>
               </div>
               <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
+                <SignOut className="w-4 h-4 mr-2" />
                 Logout
               </Button>
             </div>

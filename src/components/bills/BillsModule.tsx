@@ -7,7 +7,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Download, Eye, Receipt, Search, Filter, MoreVertical, FileX } from '@phosphor-icons/react';
+import { 
+  Download, 
+  Eye, 
+  Receipt, 
+  MagnifyingGlass, 
+  Funnel, 
+  DotsThreeVertical, 
+  FileX 
+} from "@phosphor-icons/react";
+
 import { billsAPI } from '@/lib/api';
 import { generateBillPDF } from '@/lib/pdfGenerator';
 import { toast } from 'sonner';
@@ -150,7 +159,7 @@ export default function BillsModule() {
           {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Search bills by number, customer name, or phone..."
                 value={searchQuery}
@@ -161,7 +170,7 @@ export default function BillsModule() {
             
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-48">
-                <Filter className="w-4 h-4 mr-2" />
+                <Funnel className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -175,7 +184,7 @@ export default function BillsModule() {
 
             <Select value={paymentFilter} onValueChange={setPaymentFilter}>
               <SelectTrigger className="w-full sm:w-48">
-                <Filter className="w-4 h-4 mr-2" />
+                <Funnel className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Filter by payment" />
               </SelectTrigger>
               <SelectContent>
@@ -238,7 +247,7 @@ export default function BillsModule() {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm">
-                              <MoreVertical className="w-4 h-4" />
+                              <DotsThreeVertical className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">

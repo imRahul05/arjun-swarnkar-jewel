@@ -48,7 +48,11 @@ mongoose.connect(process.env.MONGODB_URI, {
   console.error('MongoDB connection error:', err);
   process.exit(1);
 });
+// test route
 
+app.use('/test', (req, res) => {
+  res.status(200).send({msg:'API is working'});
+});
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/bills', billRoutes);

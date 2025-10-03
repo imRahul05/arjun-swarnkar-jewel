@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Plus, Trash, Download, Receipt } from '@phosphor-icons/react'
-import { useKV } from '@github/spark/hooks'
 import { billsAPI, customersAPI } from '@/lib/api'
 import { generateBillPDF } from '@/lib/pdfGenerator'
 import { toast } from 'sonner'
@@ -43,12 +42,48 @@ interface OldGold {
 }
 
 export default function BillingModule() {
-  const [bills, setBills] = useKV<any[]>('bills', [])
-  const [goldRates, setGoldRates] = useKV<Record<string, number>>('gold-rates', {
+  const [bills, setBills] = useState<any[]>([])
+  const [goldRates, setGoldRates] = useState<Record<string, number>>({
     '24K': 6500,
     '22K': 5950,
     '18K': 4875
   })
+
+  // Load bills and gold rates on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const billsData = await billsAPI.getAll()
+        console.log('Bills API response in BillingModule:', billsData)
+        
+        // Handle the API response format: { bills: [...], pagination: {...} }
+        if (billsData && Array.isArray(billsData.bills)) {
+          setBills(billsData.bills)
+        } else if (Array.isArray(billsData)) {
+          setBills(billsData)
+        } else {
+          console.error('Invalid bills data format:', billsData)
+          setBills([])
+        }
+        
+        // Load gold rates from localStorage or use defaults
+        const savedRates = localStorage.getItem('goldRates')
+        if (savedRates) {
+          setGoldRates(JSON.parse(savedRates))
+        }
+      } catch (error) {
+        console.error('Error loading data:', error)
+        setBills([]) // Ensure bills is always an array
+      }
+    }
+    
+    loadData()
+  }, [])
+
+  // Save gold rates to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('goldRates', JSON.stringify(goldRates))
+  }, [goldRates])
   
   const [customer, setCustomer] = useState<Customer>({
     name: '',
@@ -215,11 +250,11 @@ export default function BillingModule() {
         customer: customerId,
         billDate: new Date().toISOString(),
         items: formattedItems,
-        subtotal: totals.subtotal,
-        totalCgst: totals.cgst,
-        totalSgst: totals.sgst,
+        subtotal: totals.taxableValue,
+        totalCgst: totals.gstOnGold / 2,
+        totalSgst: totals.gstOnMaking / 2,
         totalIgst: 0,
-        totalTax: totals.totalTax,
+        totalTax: totals.totalGst,
         totalAmount: totals.grandTotal,
         roundOffAmount: 0,
         finalAmount: totals.grandTotal,
@@ -234,9 +269,9 @@ export default function BillingModule() {
       const savedBill = await billsAPI.create(billData);
       
       // Add to local storage for quick access
-      setBills((currentBills: any[] | undefined) => [...(currentBills || []), savedBill]);
+      setBills(currentBills => Array.isArray(currentBills) ? [...currentBills, savedBill] : [savedBill]);
       
-      // Generate PDF
+      // Generate PDF - Now in landscape format by default
       await generateBillPDF(savedBill);
       
       toast.success('Bill generated and PDF downloaded successfully!');
@@ -291,14 +326,14 @@ export default function BillingModule() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-4">
-                {Object.entries(goldRates || {}).map(([purity, rate]) => (
+                {Object.entries(goldRates).map(([purity, rate]) => (
                   <div key={purity} className="space-y-2">
                     <Label>{purity}</Label>
                     <Input
                       type="number"
                       value={rate}
-                      onChange={(e) => setGoldRates((prev: Record<string, number> | undefined) => ({
-                        ...(prev || {}),
+                      onChange={(e) => setGoldRates(prev => ({
+                        ...prev,
                         [purity]: Number(e.target.value)
                       }))}
                       className="font-mono"
@@ -324,7 +359,7 @@ export default function BillingModule() {
                 <LineItemRow
                   key={item.id}
                   item={item}
-                  goldRates={goldRates || {}}
+                  goldRates={goldRates}
                   onUpdate={(updates) => updateLineItem(item.id, updates)}
                   onRemove={() => removeLineItem(item.id)}
                   canRemove={lineItems.length > 1}
@@ -336,7 +371,7 @@ export default function BillingModule() {
           <OldGoldExchange
             oldGold={oldGold}
             setOldGold={setOldGold}
-            goldRates={goldRates || {}}
+            goldRates={goldRates}
           />
         </div>
 

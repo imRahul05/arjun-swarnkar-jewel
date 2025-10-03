@@ -76,13 +76,40 @@ router.get('/:id', auth, async (req, res) => {
 // POST /api/bills
 router.post('/', auth, async (req, res) => {
   try {
+    console.log('Creating bill with user:', req.user._id);
+    console.log('Bill data received:', req.body);
+    
+    // Generate bill number manually
+    const lastBill = await Bill.findOne({}, {}, { sort: { 'createdAt': -1 } });
+    let nextNumber = 1;
+    
+    if (lastBill && lastBill.billNumber) {
+      console.log('Last bill number:', lastBill.billNumber);
+      const match = lastBill.billNumber.match(/\d+$/);
+      if (match) {
+        nextNumber = parseInt(match[0]) + 1;
+      }
+    }
+    
+    const currentDate = new Date();
+    const year = currentDate.getFullYear().toString().slice(-2);
+    const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+    const billNumber = `AS${year}${month}${nextNumber.toString().padStart(4, '0')}`;
+    
+    console.log('Generated bill number:', billNumber);
+    
     const billData = {
       ...req.body,
+      billNumber,
       createdBy: req.user._id
     };
 
+    console.log('Final bill data:', billData);
+    
     const bill = new Bill(billData);
+    console.log('Bill instance created, saving...');
     await bill.save();
+    console.log('Bill saved successfully with ID:', bill._id);
 
     // Update customer's total purchases and last purchase date
     await Customer.findByIdAndUpdate(bill.customer, {
