@@ -63,10 +63,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    authAPI.logout();
+  // const logout = () => {
+  //   authAPI.logout();
+  //   setUser(null);
+  // };
+const logout = async () => {
+  try {
+    await authAPI.logout(); // call backend to deactivate session
+    setUser(null);          // clear user state
+  } catch (err) {
+    console.error('Logout error:', err);
     setUser(null);
-  };
+  }
+};
 
   useEffect(() => {
     refreshUser();

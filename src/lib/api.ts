@@ -80,9 +80,26 @@ export const authAPI = {
     return response.data;
   },
   
-  logout: () => {
+  // logout: () => {
+  //   removeToken();
+  // },
+  logout: async () => {
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+
+    await api.post('/auth/logout', {}, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    // Remove token locally
     removeToken();
-  },
+  } catch (err) {
+    console.error('Logout failed', err);
+    removeToken();
+  }
+},
+
 };
 
 export const billsAPI = {
