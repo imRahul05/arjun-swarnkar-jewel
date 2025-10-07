@@ -7,11 +7,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { MagnifyingGlass, UserPlus } from '@phosphor-icons/react'
 import { customersAPI } from '@/lib/api'
 import { toast } from 'sonner'
+import { Customer } from '@/types/billing'
 
-interface Customer {
-  _id?: string
-  name: string
-  phone: string
+interface ValidationErrors {
+  name?: string
+  phone?: string
   email?: string
   gstin?: string
 }
@@ -19,28 +19,31 @@ interface Customer {
 interface CustomerSelectorProps {
   customer: Customer
   setCustomer: (customer: Customer) => void
+  validationErrors?: ValidationErrors
+  onFieldBlur?: (field: keyof Customer, value: string) => void
 }
 
-export default function CustomerSelector({ customer, setCustomer }: CustomerSelectorProps) {
+export default function CustomerSelector({ 
+  customer, 
+  setCustomer, 
+  validationErrors = {}, 
+  onFieldBlur 
+}: CustomerSelectorProps) {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  // Fetch customers on component mount
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
         const customersData = await customersAPI.getAll()
         console.log('Customers API response:', customersData)
         
-        // Handle the API response format: { customers: [...], pagination: {...} }
         if (customersData && Array.isArray(customersData.customers)) {
           setCustomers(customersData.customers)
         } else if (Array.isArray(customersData)) {
-          // Fallback: if API returns array directly
           setCustomers(customersData)
         } else if (customersData && Array.isArray(customersData.data)) {
-          // Another fallback: if API returns { data: [...] }
           setCustomers(customersData.data)
         } else {
           console.error('Invalid customers data format:', customersData)
@@ -48,7 +51,7 @@ export default function CustomerSelector({ customer, setCustomer }: CustomerSele
         }
       } catch (error) {
         console.error('Error fetching customers:', error)
-        setCustomers([]) // Ensure customers is always an array
+        setCustomers([])
       }
     }
     
@@ -81,6 +84,16 @@ export default function CustomerSelector({ customer, setCustomer }: CustomerSele
         console.error('Error adding customer:', error)
         toast.error('Failed to add customer')
       }
+    }
+  }
+
+  const handleFieldChange = (field: keyof Customer, value: string) => {
+    setCustomer({ ...customer, [field]: value })
+  }
+
+  const handleFieldBlur = (field: keyof Customer, value: string) => {
+    if (onFieldBlur) {
+      onFieldBlur(field, value)
     }
   }
 
@@ -136,19 +149,28 @@ export default function CustomerSelector({ customer, setCustomer }: CustomerSele
             <Label>Customer Name *</Label>
             <Input
               value={customer.name}
-              onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+              onChange={(e) => handleFieldChange('name', e.target.value)}
+              onBlur={(e) => handleFieldBlur('name', e.target.value)}
               placeholder="Enter customer name"
+              className={validationErrors.name ? 'border-red-500' : ''}
             />
+            {validationErrors.name && (
+              <p className="text-sm text-red-500 mt-1">{validationErrors.name}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label>Phone Number *</Label>
             <Input
               value={customer.phone}
-              onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+              onChange={(e) => handleFieldChange('phone', e.target.value)}
+              onBlur={(e) => handleFieldBlur('phone', e.target.value)}
               placeholder="Enter phone number"
-              className="font-mono"
+              className={`font-mono ${validationErrors.phone ? 'border-red-500' : ''}`}
             />
+            {validationErrors.phone && (
+              <p className="text-sm text-red-500 mt-1">{validationErrors.phone}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -156,19 +178,28 @@ export default function CustomerSelector({ customer, setCustomer }: CustomerSele
             <Input
               type="email"
               value={customer.email || ''}
-              onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
+              onChange={(e) => handleFieldChange('email', e.target.value)}
+              onBlur={(e) => handleFieldBlur('email', e.target.value)}
               placeholder="Enter email address"
+              className={validationErrors.email ? 'border-red-500' : ''}
             />
+            {validationErrors.email && (
+              <p className="text-sm text-red-500 mt-1">{validationErrors.email}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label>GSTIN (Optional)</Label>
             <Input
               value={customer.gstin || ''}
-              onChange={(e) => setCustomer({ ...customer, gstin: e.target.value.toUpperCase() })}
+              onChange={(e) => handleFieldChange('gstin', e.target.value.toUpperCase())}
+              onBlur={(e) => handleFieldBlur('gstin', e.target.value)}
               placeholder="Enter GSTIN"
-              className="uppercase"
+              className={`uppercase ${validationErrors.gstin ? 'border-red-500' : ''}`}
             />
+            {validationErrors.gstin && (
+              <p className="text-sm text-red-500 mt-1">{validationErrors.gstin}</p>
+            )}
           </div>
         </div>
 

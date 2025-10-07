@@ -4,17 +4,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Trash } from '@phosphor-icons/react'
+import { LineItem } from '@/types/billing'
+import { calculateLineItemValue } from '@/utils/billingCalculations'
 
-interface LineItem {
-  id: string
-  purity: string
-  description: string
-  netWeight: number
-  grossWeight: number
-  huidNumber: string
-  makingChargesType: 'per_gram' | 'flat'
-  makingCharges: number
-  hallmarkingCharges: number
+interface ValidationErrors {
+  description?: string
+  netWeight?: string
+  grossWeight?: string
+  huidNumber?: string
+  makingCharges?: string
 }
 
 interface LineItemRowProps {
@@ -23,22 +21,31 @@ interface LineItemRowProps {
   onUpdate: (updates: Partial<LineItem>) => void
   onRemove: () => void
   canRemove: boolean
+  validationErrors?: ValidationErrors
+  onFieldBlur?: (field: string, value: any) => void
 }
 
-export default function LineItemRow({ item, goldRates, onUpdate, onRemove, canRemove }: LineItemRowProps) {
+export default function LineItemRow({ 
+  item, 
+  goldRates, 
+  onUpdate, 
+  onRemove, 
+  canRemove,
+  validationErrors = {},
+  onFieldBlur
+}: LineItemRowProps) {
   const calculateItemValue = () => {
-    if (!item.netWeight || !goldRates[item.purity]) return 0
-    const ratePerGram = goldRates[item.purity] / 10
-    const goldValue = item.netWeight * ratePerGram
-    
-    let makingValue = 0
-    if (item.makingChargesType === 'per_gram') {
-      makingValue = item.netWeight * item.makingCharges
-    } else {
-      makingValue = item.makingCharges
+    return calculateLineItemValue(item, goldRates)
+  }
+
+  const handleFieldChange = (field: keyof LineItem, value: any) => {
+    onUpdate({ [field]: value })
+  }
+
+  const handleFieldBlur = (field: string, value: any) => {
+    if (onFieldBlur) {
+      onFieldBlur(field, value)
     }
-    
-    return goldValue + makingValue + item.hallmarkingCharges
   }
 
   return (
@@ -56,7 +63,7 @@ export default function LineItemRow({ item, goldRates, onUpdate, onRemove, canRe
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="space-y-2">
             <Label>Purity</Label>
-            <Select value={item.purity} onValueChange={(value) => onUpdate({ purity: value })}>
+            <Select value={item.purity} onValueChange={(value) => handleFieldChange('purity', value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -69,36 +76,49 @@ export default function LineItemRow({ item, goldRates, onUpdate, onRemove, canRe
           </div>
           
           <div className="space-y-2 md:col-span-3">
-            <Label>Item Description</Label>
+            <Label>Item Description *</Label>
             <Input
               value={item.description}
-              onChange={(e) => onUpdate({ description: e.target.value })}
+              onChange={(e) => handleFieldChange('description', e.target.value)}
+              onBlur={(e) => handleFieldBlur('description', e.target.value)}
               placeholder="e.g., Gold Chain, Earrings"
+              className={validationErrors.description ? 'border-red-500' : ''}
             />
+            {validationErrors.description && (
+              <p className="text-sm text-red-500 mt-1">{validationErrors.description}</p>
+            )}
           </div>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label>Net Weight (gms)</Label>
+            <Label>Net Weight (gms) *</Label>
             <Input
               type="number"
               step="0.001"
               value={item.netWeight || ''}
-              onChange={(e) => onUpdate({ netWeight: Number(e.target.value) })}
-              className="font-mono"
+              onChange={(e) => handleFieldChange('netWeight', Number(e.target.value))}
+              onBlur={(e) => handleFieldBlur('netWeight', Number(e.target.value))}
+              className={`font-mono ${validationErrors.netWeight ? 'border-red-500' : ''}`}
             />
+            {validationErrors.netWeight && (
+              <p className="text-sm text-red-500 mt-1">{validationErrors.netWeight}</p>
+            )}
           </div>
           
           <div className="space-y-2">
-            <Label>Gross Weight (gms)</Label>
+            <Label>Gross Weight (gms) *</Label>
             <Input
               type="number"
               step="0.001"
               value={item.grossWeight || ''}
-              onChange={(e) => onUpdate({ grossWeight: Number(e.target.value) })}
-              className="font-mono"
+              onChange={(e) => handleFieldChange('grossWeight', Number(e.target.value))}
+              onBlur={(e) => handleFieldBlur('grossWeight', Number(e.target.value))}
+              className={`font-mono ${validationErrors.grossWeight ? 'border-red-500' : ''}`}
             />
+            {validationErrors.grossWeight && (
+              <p className="text-sm text-red-500 mt-1">{validationErrors.grossWeight}</p>
+            )}
           </div>
           
           <div className="space-y-2">
@@ -117,18 +137,22 @@ export default function LineItemRow({ item, goldRates, onUpdate, onRemove, canRe
             <Label>HUID Number *</Label>
             <Input
               value={item.huidNumber}
-              onChange={(e) => onUpdate({ huidNumber: e.target.value.toUpperCase() })}
+              onChange={(e) => handleFieldChange('huidNumber', e.target.value.toUpperCase())}
+              onBlur={(e) => handleFieldBlur('huidNumber', e.target.value)}
               placeholder="ABC123"
               maxLength={6}
-              className="uppercase"
+              className={`uppercase ${validationErrors.huidNumber ? 'border-red-500' : ''}`}
             />
+            {validationErrors.huidNumber && (
+              <p className="text-sm text-red-500 mt-1">{validationErrors.huidNumber}</p>
+            )}
           </div>
           
           <div className="space-y-2">
             <Label>Making Charges</Label>
             <Select 
               value={item.makingChargesType} 
-              onValueChange={(value: 'per_gram' | 'flat') => onUpdate({ makingChargesType: value })}
+              onValueChange={(value: 'per_gram' | 'flat') => handleFieldChange('makingChargesType', value)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -145,10 +169,14 @@ export default function LineItemRow({ item, goldRates, onUpdate, onRemove, canRe
             <Input
               type="number"
               value={item.makingCharges || ''}
-              onChange={(e) => onUpdate({ makingCharges: Number(e.target.value) })}
+              onChange={(e) => handleFieldChange('makingCharges', Number(e.target.value))}
+              onBlur={(e) => handleFieldBlur('makingCharges', Number(e.target.value))}
               placeholder={item.makingChargesType === 'per_gram' ? 'Per gram' : 'Total'}
-              className="font-mono"
+              className={`font-mono ${validationErrors.makingCharges ? 'border-red-500' : ''}`}
             />
+            {validationErrors.makingCharges && (
+              <p className="text-sm text-red-500 mt-1">{validationErrors.makingCharges}</p>
+            )}
           </div>
         </div>
         
@@ -158,7 +186,7 @@ export default function LineItemRow({ item, goldRates, onUpdate, onRemove, canRe
             <Input
               type="number"
               value={item.hallmarkingCharges || ''}
-              onChange={(e) => onUpdate({ hallmarkingCharges: Number(e.target.value) })}
+              onChange={(e) => handleFieldChange('hallmarkingCharges', Number(e.target.value))}
               className="font-mono"
             />
           </div>
