@@ -49,8 +49,8 @@ export interface BillTotals {
   makingChargesTotal: number
   oldGoldValue: number
   taxableValue: number
-  gstOnGold: number
-  gstOnMaking: number
+  cgstAmount: number
+  sgstAmount: number
   totalGst: number
   grandTotal: number
 }
@@ -101,9 +101,9 @@ export type MakingChargesType = 'per_gram' | 'flat'
 
 // Constants
 export const DEFAULT_GOLD_RATES: Record<PurityType, number> = {
-  '24K': 6500,
-  '22K': 5950,
-  '18K': 4875
+  '24K': 126000,
+  '22K': 90000,
+  '18K': 70000
 }
 
 export const DEFAULT_LINE_ITEM: Omit<LineItem, 'id'> = {
@@ -114,7 +114,7 @@ export const DEFAULT_LINE_ITEM: Omit<LineItem, 'id'> = {
   huidNumber: '',
   makingChargesType: 'per_gram',
   makingCharges: 0,
-  hallmarkingCharges: 35
+  hallmarkingCharges: 0
 }
 
 export const DEFAULT_CUSTOMER: Customer = {
@@ -131,8 +131,7 @@ export const PURITY_FACTORS: Record<PurityType, number> = {
 }
 
 export const TAX_RATES = {
-  GST_ON_GOLD: 0.03,
-  GST_ON_MAKING: 0.05,
+  GST_RATE: 0.03,
   CGST_RATE: 0.015,
   SGST_RATE: 0.015
 } as const

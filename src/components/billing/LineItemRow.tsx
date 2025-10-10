@@ -182,13 +182,16 @@ export default function LineItemRow({
         
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Hallmarking Charges (₹)</Label>
+            <Label>Hallmarking Charges</Label>
             <Input
               type="number"
-              value={item.hallmarkingCharges || ''}
-              onChange={(e) => handleFieldChange('hallmarkingCharges', Number(e.target.value))}
-              className="font-mono"
+              value={0}
+              disabled
+              className="font-mono bg-muted"
             />
+            <p className="text-xs text-muted-foreground">
+              Hallmarking charges are currently disabled.
+            </p>
           </div>
           
           <div className="space-y-2">

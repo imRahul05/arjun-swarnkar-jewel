@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -154,6 +154,9 @@ export default function BillsModule() {
             <Receipt className="w-5 h-5" />
             Bills Management
           </CardTitle>
+          <CardDescription>
+            GST is now applied on gold value plus making charges. Hallmarking fees remain disabled.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {/* Search and Filters */}

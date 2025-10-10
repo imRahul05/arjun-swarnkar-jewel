@@ -31,8 +31,6 @@ export const calculateBillTotals = (
       } else {
         makingChargesTotal += item.makingCharges
       }
-      
-      makingChargesTotal += item.hallmarkingCharges
     }
   })
   
@@ -44,9 +42,9 @@ export const calculateBillTotals = (
   
   // Calculate taxes
   const taxableValue = goldValue + makingChargesTotal
-  const gstOnGold = goldValue * TAX_RATES.GST_ON_GOLD
-  const gstOnMaking = makingChargesTotal * TAX_RATES.GST_ON_MAKING
-  const totalGst = gstOnGold + gstOnMaking
+  const cgstAmount = taxableValue * TAX_RATES.CGST_RATE
+  const sgstAmount = taxableValue * TAX_RATES.SGST_RATE
+  const totalGst = cgstAmount + sgstAmount
   const grandTotal = taxableValue + totalGst - oldGoldValue
   
   return {
@@ -54,8 +52,8 @@ export const calculateBillTotals = (
     makingChargesTotal,
     oldGoldValue,
     taxableValue,
-    gstOnGold,
-    gstOnMaking,
+    cgstAmount,
+    sgstAmount,
     totalGst,
     grandTotal
   }
@@ -80,7 +78,7 @@ export const calculateLineItemValue = (
     makingValue = item.makingCharges
   }
   
-  return goldValue + makingValue + item.hallmarkingCharges
+  return goldValue + makingValue
 }
 
 /**
@@ -96,10 +94,10 @@ export const formatBillItems = (
     const makingAmount = item.makingChargesType === 'per_gram' 
       ? (item.netWeight * item.makingCharges)
       : item.makingCharges
-    const totalAmount = baseAmount + makingAmount + item.hallmarkingCharges
-    const taxableAmount = totalAmount
-    const cgstAmount = taxableAmount * TAX_RATES.CGST_RATE
-    const sgstAmount = taxableAmount * TAX_RATES.SGST_RATE
+  const totalAmount = baseAmount + makingAmount
+  const taxableAmount = totalAmount
+  const cgstAmount = taxableAmount * TAX_RATES.CGST_RATE
+  const sgstAmount = taxableAmount * TAX_RATES.SGST_RATE
 
     return {
       description: item.description,
@@ -141,9 +139,9 @@ export const createBillData = (
     customer: customerId,
     billDate: new Date().toISOString(),
     items: formattedItems,
-    subtotal: totals.taxableValue,
-    totalCgst: totals.gstOnGold / 2,
-    totalSgst: totals.gstOnMaking / 2,
+  subtotal: totals.taxableValue,
+  totalCgst: totals.cgstAmount,
+  totalSgst: totals.sgstAmount,
     totalIgst: 0,
     totalTax: totals.totalGst,
     totalAmount: totals.grandTotal,

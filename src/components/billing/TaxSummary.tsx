@@ -7,8 +7,8 @@ interface TaxSummaryProps {
     makingChargesTotal: number
     oldGoldValue: number
     taxableValue: number
-    gstOnGold: number
-    gstOnMaking: number
+    cgstAmount: number
+    sgstAmount: number
     totalGst: number
     grandTotal: number
   }
@@ -42,13 +42,8 @@ export default function TaxSummary({ totals }: TaxSummaryProps) {
         </div>
         
         <div className="flex justify-between text-sm">
-          <span>GST on Gold (3%):</span>
-          <span className="font-mono">{formatCurrency(totals.gstOnGold)}</span>
-        </div>
-        
-        <div className="flex justify-between text-sm">
-          <span>GST on Making (5%):</span>
-          <span className="font-mono">{formatCurrency(totals.gstOnMaking)}</span>
+          <span>GST on Gold + Making (3%):</span>
+          <span className="font-mono">{formatCurrency(totals.totalGst)}</span>
         </div>
         
         <div className="flex justify-between text-sm font-medium">
@@ -76,13 +71,16 @@ export default function TaxSummary({ totals }: TaxSummaryProps) {
         <div className="mt-4 p-3 bg-muted rounded-lg">
           <div className="text-xs text-muted-foreground space-y-1">
             <div className="flex justify-between">
-              <span>CGST (1.5% + 2.5%):</span>
-              <span className="font-mono">{formatCurrency(totals.totalGst / 2)}</span>
+              <span>CGST (1.5% on gold + making):</span>
+              <span className="font-mono">{formatCurrency(totals.cgstAmount)}</span>
             </div>
             <div className="flex justify-between">
-              <span>SGST (1.5% + 2.5%):</span>
-              <span className="font-mono">{formatCurrency(totals.totalGst / 2)}</span>
+              <span>SGST (1.5% on gold + making):</span>
+              <span className="font-mono">{formatCurrency(totals.sgstAmount)}</span>
             </div>
+            <p className="pt-1">
+              Hallmarking fees remain disabled; GST is computed on gold and making charges together.
+            </p>
           </div>
         </div>
       </CardContent>

@@ -61,7 +61,7 @@ const NotFound: FC = () => {
         </div>
 
         {/* Back link */}
-        <div className="mt-12">
+        {/* <div className="mt-12">
           <Button 
             variant="ghost" 
             onClick={() => navigate(-1)}
@@ -70,7 +70,7 @@ const NotFound: FC = () => {
             <ArrowLeft className="w-4 h-4" />
             Go back to previous page
           </Button>
-        </div>
+        </div> */}
 
         {/* Decorative bottom element */}
         <div className="mt-16 flex justify-center gap-2">
